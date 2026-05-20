@@ -10,6 +10,8 @@ import PostDetailPage  from '../features/post/PostDetailPage'
 import LeaderboardPage from '../features/ranking/LeaderboardPage'
 import ProfilePage     from '../features/profile/ProfilePage'
 import SearchPage      from '../features/search/SearchPage'
+import StoriesPage    from '../features/stories/StoriesPage'
+import MembersPage   from '../features/members/MembersPage'
 import useAuthStore    from '../store/useAuthStore'
 import Spinner         from '../components/Spinner/Spinner'
 import { ROLES }       from '../lib/constants'
@@ -21,6 +23,17 @@ function PendingGuard({ children }) {
   }
   if (!user) return <Navigate to="/login" replace />
   if (profile && profile.role !== ROLES.PENDING_TEACHER) return <Navigate to="/" replace />
+  return children
+}
+
+function TeacherGuard({ children }) {
+  const { user, profile, loading } = useAuthStore()
+  if (loading || (user && !profile)) {
+    return <div style={{ display: 'flex', justifyContent: 'center', padding: 64 }}><Spinner size="lg" /></div>
+  }
+  if (!user) return <Navigate to="/login" replace />
+  const allowed = [ROLES.TEACHER, ROLES.ADMIN]
+  if (profile && !allowed.includes(profile.role)) return <Navigate to="/" replace />
   return children
 }
 
@@ -57,6 +70,8 @@ export default function AppRouter() {
           <Route path="profile"      element={<ProfilePage />} />
           <Route path="profile/:uid" element={<ProfilePage />} />
           <Route path="post/:postId" element={<PostDetailPage />} />
+          <Route path="stories"    element={<StoriesPage />} />
+          <Route path="members"   element={<TeacherGuard><MembersPage /></TeacherGuard>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

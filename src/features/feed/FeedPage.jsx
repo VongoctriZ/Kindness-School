@@ -1,13 +1,18 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { getRoleLabel, derivePointsDisplay } from '../../lib/utils'
 import { Link }   from 'react-router-dom'
-import { useFeedController }  from '../../mvc/controllers/useFeedController'
-import { useLeaderboard }     from '../../mvc/controllers/usePointsController'
-import useAuthStore   from '../../store/useAuthStore'
-import PostCard          from '../../components/PostCard/PostCard'
-import Avatar            from '../../components/Avatar/Avatar'
-import Spinner           from '../../components/Spinner/Spinner'
-import KindnessProgress  from '../../components/KindnessProgress/KindnessProgress'
+import { useFeedController }    from '../../mvc/controllers/useFeedController'
+import { useLeaderboard }       from '../../mvc/controllers/usePointsController'
+import { useFeaturedStories }   from '../../mvc/controllers/useStoriesController'
+import useAuthStore     from '../../store/useAuthStore'
+import PostCard         from '../../components/PostCard/PostCard'
+import Avatar           from '../../components/Avatar/Avatar'
+import Spinner          from '../../components/Spinner/Spinner'
+import KindnessProgress from '../../components/KindnessProgress/KindnessProgress'
+import HeroCarousel     from '../../components/HeroCarousel/HeroCarousel'
+import StoryModal       from '../stories/StoryModal'
+import { STATIC_HERO_SLIDES } from '../../lib/constants'
+import { SAMPLE_STORIES }     from '../../lib/sampleStories'
 import styles from './FeedPage.module.css'
 
 const POINTS_RULES = [
@@ -21,30 +26,41 @@ export default function FeedPage() {
   const { posts, likedPosts, loading, handleLike, handleDelete, loadMore, hasMore } = useFeedController()
   const { users: topUsers } = useLeaderboard(5)
   const { user, profile }   = useAuthStore()
+  const featured            = useFeaturedStories()
+  const [heroStory, setHeroStory] = useState(null)
+
+  const featuredSlides = featured.map(s => ({
+    imageUrl: s.imageUrl ?? STATIC_HERO_SLIDES[0].imageUrl,
+    title:    s.title,
+    caption:  s.publisherName,
+    storyId:  s.id,
+  }))
+
+  // Khi chưa có featured story trong Firestore, dùng sample stories nổi bật
+  const sampleFeaturedSlides = featured.length === 0
+    ? SAMPLE_STORIES
+        .filter(s => s.isFeatured)
+        .map(s => ({ imageUrl: s.imageUrl, title: s.title, caption: s.content.slice(0, 60), storyId: null }))
+    : []
+
+  const carouselSlides = [...featuredSlides, ...sampleFeaturedSlides, ...STATIC_HERO_SLIDES]
 
   return (
     <div className={styles.page}>
-      {/* HERO */}
-      <section className={styles.hero}>
-        <div className={styles.heroIn}>
-          <div className={styles.heroText}>
-            <div className={styles.heroBadge}>✨ Mạng xã hội học đường tích cực</div>
-            <h1 className={styles.heroTitle}>
-              Chia sẻ điều tốt,<br />
-              <span>lan tỏa yêu thương</span>
-            </h1>
-            <p className={styles.heroDesc}>
-              Mỗi hành động tốt đều được ghi nhận và tích điểm. Cùng nhau xây dựng cộng đồng học đường tích cực.
-            </p>
-          </div>
-          <div className={styles.heroStats}>
-            <div className={styles.heroStat}><div className={styles.hsIco}>👩‍🎓</div><div className={styles.hsNum}>1,248</div><div className={styles.hsLbl}>Học sinh tham gia</div></div>
-            <div className={styles.heroStat}><div className={styles.hsIco}>📝</div><div className={styles.hsNum}>{posts.length}+</div><div className={styles.hsLbl}>Bài viết tốt đẹp</div></div>
-            <div className={styles.heroStat}><div className={styles.hsIco}>⭐</div><div className={styles.hsNum}>42,810</div><div className={styles.hsLbl}>Kindness Points</div></div>
-            <div className={styles.heroStat}><div className={styles.hsIco}>❤️</div><div className={styles.hsNum}>18,940</div><div className={styles.hsLbl}>Lượt yêu thích</div></div>
-          </div>
-        </div>
+      {/* HERO CAROUSEL */}
+      <section className={styles.heroWrap}>
+        <HeroCarousel
+          slides={carouselSlides}
+          onSlideClick={storyId => {
+            const story = featured.find(s => s.id === storyId)
+            if (story) setHeroStory(story)
+          }}
+        />
       </section>
+
+      {heroStory && (
+        <StoryModal story={heroStory} onClose={() => setHeroStory(null)} />
+      )}
 
       {/* MAIN GRID */}
       <div className={styles.main}>

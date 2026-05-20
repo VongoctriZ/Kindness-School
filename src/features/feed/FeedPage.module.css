@@ -1,5 +1,15 @@
 .page { min-height: 100vh; }
 
+/* HeroCarousel wrapper */
+.heroWrap {
+  padding: var(--space-4) var(--space-4) 0;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+@media (min-width: 768px) {
+  .heroWrap { padding: var(--space-6) var(--space-8) 0; }
+}
+
 /* Hero */
 .hero {
   background: linear-gradient(135deg, #1a7a4a 0%, #2d9e6b 30%, #4B6FD8 70%, #6B6FD8 100%);

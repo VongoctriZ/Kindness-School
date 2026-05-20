@@ -5,7 +5,8 @@ import {
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { buildUserDoc } from '../mvc/models/user.model'
-import { POINTS, LEADERBOARD_SIZE, ROLES, MATURE_TREE_THRESHOLD } from '../lib/constants'
+import { POINTS, LEADERBOARD_SIZE, ROLES, MATURE_TREE_THRESHOLD, GRADE_BLOCKS } from '../lib/constants'
+import { extractGradeBlock } from '../lib/utils'
 
 export async function createUserDocument(firebaseUser, extra = {}, isNew = true) {
   const ref  = doc(db, 'users', firebaseUser.uid)
@@ -43,6 +44,15 @@ export function subscribeToLeaderboard(callback, onError, n = 10) {
   return onSnapshot(q,
     snap => callback(snap.docs.map((d, i) => ({ uid: d.id, rank: i + 1, ...d.data() }))),
     err  => { console.error('[subscribeToLeaderboard]', err.code, err.message); onError?.(err) },
+  )
+}
+
+// Không giới hạn số lượng — dùng cho leaderboard page để filter theo khối chính xác
+export function subscribeToAllUsersRanked(callback, onError) {
+  const q = query(collection(db, 'users'), orderBy('totalPoints', 'desc'))
+  return onSnapshot(q,
+    snap => callback(snap.docs.map((d, i) => ({ uid: d.id, rank: i + 1, ...d.data() }))),
+    err  => { console.error('[subscribeToAllUsersRanked]', err.code, err.message); onError?.(err) },
   )
 }
 
@@ -116,4 +126,28 @@ export async function approveTeacher(uid) {
 
 export async function rejectTeacher(uid) {
   await updateDoc(doc(db, 'users', uid), { role: 'rejected' })
+}
+
+export async function getUserStats() {
+  const snap  = await getDocs(collection(db, 'users'))
+  const users = snap.docs.map(d => d.data())
+
+  const students    = users.filter(u => u.role === ROLES.STUDENT || !u.role)
+  const teachers    = users.filter(u => u.role === ROLES.TEACHER)
+  const admins      = users.filter(u => u.role === ROLES.ADMIN)
+  const totalPoints = users.reduce((sum, u) => sum + (u.totalPoints ?? 0), 0)
+
+  const byGrade = Object.fromEntries(GRADE_BLOCKS.map(g => [g, 0]))
+  students.forEach(u => {
+    const block = extractGradeBlock(u.grade)
+    if (block && byGrade[block] !== undefined) byGrade[block]++
+  })
+
+  return {
+    totalStudents: students.length,
+    totalTeachers: teachers.length + admins.length,
+    total:         users.length,
+    totalPoints,
+    byGrade,
+  }
 }

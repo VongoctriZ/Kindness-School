@@ -45,6 +45,12 @@ export function uploadCover(uid, file) {
   return firebaseUpload(file, `covers/${uid}/cover`)
 }
 
+export function uploadStoryCover(storyId, file, onProgress) {
+  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) throw new Error('Chỉ hỗ trợ ảnh JPEG, PNG, GIF, WebP')
+  if (file.size > MAX_FILE_SIZE)                 throw new Error('Ảnh quá lớn (tối đa 10 MB)')
+  return firebaseUpload(file, `stories/${storyId}/cover`, onProgress)
+}
+
 export async function uploadPostMedia(uid, file, onProgress) {
   const mediaType = validateFile(file)
   const ext       = file.name.split('.').pop()

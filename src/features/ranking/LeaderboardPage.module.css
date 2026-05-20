@@ -92,6 +92,114 @@
   font-size: var(--text-sm);
 }
 
+/* ── Community Stats ─────────────────────────────────── */
+.statsSection {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 28px 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Stat cards row */
+.statCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+@media (min-width: 640px) {
+  .statCards { grid-template-columns: repeat(4, 1fr); }
+}
+
+.statCard {
+  border-radius: var(--r-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.statCardBlue   { background: #EEEEFF; }
+.statCardGreen  { background: var(--color-accent-light); }
+.statCardYellow { background: var(--color-yellow-light); }
+.statCardOrange { background: #FFF7ED; }
+
+.statIcon { font-size: 1.5rem; }
+.statNum  {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+@media (min-width: 640px) { .statNum { font-size: 2rem; } }
+.statLbl  { font-size: var(--text-xs); color: var(--color-text-2); font-weight: 500; }
+
+/* Grade bar chart */
+.gradeCard {
+  background: white;
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 20px 24px;
+}
+.gradeTitle {
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 16px;
+}
+
+.gradeChart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.gradeRow {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  align-items: center;
+  gap: 10px;
+}
+@media (min-width: 480px) {
+  .gradeRow { grid-template-columns: 68px 1fr 90px; }
+}
+
+.gradeLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-2);
+  white-space: nowrap;
+}
+.gradeBarWrap {
+  height: 10px;
+  background: var(--color-bg);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+.gradeBar {
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 4px;
+}
+.gradeCount {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.gradeNum {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+.gradePct {
+  font-size: var(--text-xs);
+  color: var(--color-text-3);
+}
+
+/* ── Podium ──────────────────────────────────────────── */
 /* Podium */
 .podiumSection { margin-top: 40px; margin-bottom: 32px; }
 .podium { display: flex; align-items: flex-end; justify-content: center; gap: 16px; }

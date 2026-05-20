@@ -9,15 +9,17 @@ import { signOutUser } from '../../services/auth.service'
 import styles from './Navbar.module.css'
 
 const NAV_LINKS = [
-  { to: '/',            icon: '🏠', label: 'Trang chủ' },
-  { to: '/leaderboard', icon: '🏆', label: 'Xếp hạng'  },
-  { to: '/profile',     icon: '👤', label: 'Hồ sơ'     },
+  { to: '/',            icon: '🏠', label: 'Trang chủ',       roles: null },
+  { to: '/stories',     icon: '📖', label: 'Stories',          roles: null },
+  { to: '/leaderboard', icon: '🏆', label: 'Xếp hạng',        roles: null },
+  { to: '/members',     icon: '👥', label: 'Thành viên',       roles: ['teacher', 'admin'] },
+  { to: '/profile',     icon: '👤', label: 'Hồ sơ',           roles: null },
 ]
 
 export default function Navbar({ onPostClick }) {
-  const [scrolled,    setScrolled]    = useState(false)
-  const [menuOpen,    setMenuOpen]    = useState(false)
-  const [searchOpen,  setSearchOpen]  = useState(false)
+  const [scrolled,   setScrolled]   = useState(false)
+  const [menuOpen,   setMenuOpen]   = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const { user, profile } = useAuthStore()
   const navigate = useNavigate()
 
@@ -32,58 +34,67 @@ export default function Navbar({ onPostClick }) {
     navigate('/login')
   }
 
+  const visibleLinks = NAV_LINKS.filter(n => !n.roles || n.roles.includes(profile?.role))
+
   return (
     <>
       <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
         <div className={styles.inner}>
-          <Link to="/" className={styles.logo}>🌱 Kindness School</Link>
 
+          {/* Logo */}
+          <Link to="/" className={styles.logo}>🌱 <span className={styles.logoText}>Kindness School</span></Link>
+
+          {/* Center nav links */}
           <div className={styles.links}>
-            {NAV_LINKS.map(n => <NavItem key={n.to} {...n} />)}
+            {visibleLinks.map(n => <NavItem key={n.to} {...n} />)}
           </div>
 
-          <button
-            className={styles.searchBtn}
-            onClick={() => setSearchOpen(true)}
-            aria-label="Tìm kiếm"
-          >
-            🔍 <span className={styles.searchBtnLabel}>Tìm kiếm</span>
-          </button>
+          {/* Right actions */}
+          <div className={styles.right}>
+            <button
+              className={styles.searchBtn}
+              onClick={() => setSearchOpen(true)}
+              aria-label="Tìm kiếm"
+            >
+              🔍 <span className={styles.searchBtnLabel}>Tìm kiếm</span>
+            </button>
 
-          <button className={styles.postBtn} onClick={onPostClick}>✏️ Đăng bài</button>
+            <button className={styles.postBtn} onClick={onPostClick}>✏️ <span className={styles.postBtnLabel}>Đăng bài</span></button>
 
-          {user && (
-            <div className={styles.userArea}>
-              <NotifBell />
-              <Link to="/profile" className={styles.userInfo}>
-                <Avatar
-                  src={profile?.photoURL}
-                  name={profile?.displayName}
-                  uid={user.uid}
-                  size="large"
-                  online
-                />
-                <div className={styles.userText}>
-                  <div className={styles.userName}>{profile?.displayName}</div>
-                  <div className={styles.userSub}>
-                    {profile?.grade} · ⭐ {profile?.totalPoints ?? 0}
+            {user && (
+              <div className={styles.userArea}>
+                <NotifBell />
+                <Link to="/profile" className={styles.userInfo}>
+                  <Avatar
+                    src={profile?.photoURL}
+                    name={profile?.displayName}
+                    uid={user.uid}
+                    size="large"
+                    online
+                  />
+                  <div className={styles.userText}>
+                    <div className={styles.userName}>{profile?.displayName}</div>
+                    <div className={styles.userSub}>
+                      {profile?.grade} · ⭐ {profile?.totalPoints ?? 0}
+                    </div>
                   </div>
-                </div>
-              </Link>
-              <button className={styles.logoutBtn} onClick={handleLogout} title="Đăng xuất">↩</button>
-            </div>
-          )}
+                </Link>
+                <button className={styles.logoutBtn} onClick={handleLogout} title="Đăng xuất">↩</button>
+              </div>
+            )}
 
-          <button className={styles.ham} onClick={() => setMenuOpen(v => !v)} aria-label="Menu">
-            {menuOpen ? '✕' : '☰'}
-          </button>
+            <button className={styles.ham} onClick={() => setMenuOpen(v => !v)} aria-label="Menu">
+              {menuOpen ? '✕' : '☰'}
+            </button>
+          </div>
+
         </div>
       </nav>
 
       {/* Mobile drawer */}
       {menuOpen && (
         <div className={styles.drawer}>
-          {NAV_LINKS.map(n => (
+          {visibleLinks.map(n => (
             <Link
               key={n.to}
               to={n.to}

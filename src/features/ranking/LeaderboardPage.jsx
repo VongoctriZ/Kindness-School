@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useLeaderboard } from '../../mvc/controllers/usePointsController'
+import { useLeaderboard, useAllUsersRanked, useUserStats } from '../../mvc/controllers/usePointsController'
 import useAuthStore from '../../store/useAuthStore'
-import { getKindnessTitle, extractGradeBlock, derivePointsDisplay } from '../../lib/utils'
+import { getKindnessTitle, extractGradeBlock, derivePointsDisplay, formatNumber } from '../../lib/utils'
 import { GRADE_BLOCKS } from '../../lib/constants'
 import { getWeeklyRanking } from '../../services/ranking.service'
 import Avatar   from '../../components/Avatar/Avatar'
@@ -12,9 +12,15 @@ import styles from './LeaderboardPage.module.css'
 const TIME_FILTERS  = ['Tuần này', 'Tháng này', 'Năm học', 'Tất cả']
 const CLASS_FILTERS = ['Tất cả', ...GRADE_BLOCKS.map(k => `Khối ${k}`)]
 
+const GRADE_COLORS = ['#6B6FD8','#7B6FD4','#8B6FCE','#9B70C6','#AB72BE','#BB74B6','#22C55E']
+
 export default function LeaderboardPage() {
-  const { users, loading }  = useLeaderboard(50)
+  const { users: allUsers, loading } = useAllUsersRanked()
   const { user, profile }   = useAuthStore()
+  const { stats }           = useUserStats()
+
+  // top 50 cho sidebar FeedPage vẫn dùng useLeaderboard — ở đây dùng toàn bộ
+  const users = allUsers
   const [timeFilter,  setTimeFilter]  = useState('Tháng này')
   const [classFilter, setClassFilter] = useState('Tất cả')
   const [search,      setSearch]      = useState('')
@@ -120,6 +126,65 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
+      {/* Community Stats */}
+      {stats && (
+        <div className={styles.statsSection}>
+          {/* 4 stat cards */}
+          <div className={styles.statCards}>
+            <div className={`${styles.statCard} ${styles.statCardBlue}`}>
+              <div className={styles.statIcon}>👩‍🎓</div>
+              <div className={styles.statNum}>{formatNumber(stats.totalStudents)}</div>
+              <div className={styles.statLbl}>Học sinh</div>
+            </div>
+            <div className={`${styles.statCard} ${styles.statCardGreen}`}>
+              <div className={styles.statIcon}>👨‍🏫</div>
+              <div className={styles.statNum}>{formatNumber(stats.totalTeachers)}</div>
+              <div className={styles.statLbl}>Giáo viên</div>
+            </div>
+            <div className={`${styles.statCard} ${styles.statCardYellow}`}>
+              <div className={styles.statIcon}>👥</div>
+              <div className={styles.statNum}>{formatNumber(stats.total)}</div>
+              <div className={styles.statLbl}>Tổng thành viên</div>
+            </div>
+            <div className={`${styles.statCard} ${styles.statCardOrange}`}>
+              <div className={styles.statIcon}>⭐</div>
+              <div className={styles.statNum}>{formatNumber(stats.totalPoints)}</div>
+              <div className={styles.statLbl}>Kindness Points</div>
+            </div>
+          </div>
+
+          {/* Grade breakdown */}
+          <div className={styles.gradeCard}>
+            <div className={styles.gradeTitle}>📊 Thống kê học sinh theo khối</div>
+            <div className={styles.gradeChart}>
+              {GRADE_BLOCKS.map((g, i) => {
+                const count  = stats.byGrade[g] ?? 0
+                const maxVal = Math.max(...Object.values(stats.byGrade), 1)
+                const pct    = Math.round((count / stats.totalStudents) * 100) || 0
+                return (
+                  <div key={g} className={styles.gradeRow}>
+                    <div className={styles.gradeLabel}>Khối {g}</div>
+                    <div className={styles.gradeBarWrap}>
+                      <div
+                        className={styles.gradeBar}
+                        style={{
+                          width: `${(count / maxVal) * 100}%`,
+                          background: GRADE_COLORS[i],
+                        }}
+                      />
+                    </div>
+                    <div className={styles.gradeCount}>
+                      <span className={styles.gradeNum}>{count}</span>
+                      <span className={styles.gradePct}>({pct}%)</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isLoading
         ? <div className={styles.center}><Spinner size="lg" /></div>
         : (
@@ -169,7 +234,7 @@ export default function LeaderboardPage() {
               <div className={styles.table}>
                 <div className={styles.tableHeader}>
                   <h3 className={styles.tableTitle}>🏆 Bảng xếp hạng đầy đủ · {timeFilter}</h3>
-                  <span className={styles.tableCount}>{filtered.length} học sinh</span>
+                  <span className={styles.tableCount}>{filtered.length} thành viên</span>
                 </div>
 
                 {filtered.length === 0 && (

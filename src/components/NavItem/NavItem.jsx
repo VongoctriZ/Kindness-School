@@ -11,7 +11,7 @@ export default function NavItem({ to, icon, label }) {
       }
     >
       {icon && <span className={styles.icon}>{icon}</span>}
-      <span>{label}</span>
+      <span className={styles.label}>{label}</span>
     </NavLink>
   )
 }

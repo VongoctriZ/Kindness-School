@@ -23,8 +23,8 @@ export default function StoriesPage() {
 
   const canPost = profile?.role === ROLES.TEACHER || profile?.role === ROLES.ADMIN
 
-  // Hiển thị sample stories khi Firestore chưa có nội dung nào
-  const allStories = stories.length > 0 ? stories : SAMPLE_STORIES
+  // Luôn gộp stories thật + sample, stories thật hiện trước
+  const allStories = [...stories, ...SAMPLE_STORIES]
 
   const filtered = filter === 'all'
     ? allStories

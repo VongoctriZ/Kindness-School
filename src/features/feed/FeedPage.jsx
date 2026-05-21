@@ -32,7 +32,7 @@ export default function FeedPage() {
   const featuredSlides = featured.map(s => ({
     imageUrl: s.imageUrl ?? STATIC_HERO_SLIDES[0].imageUrl,
     title:    s.title,
-    caption:  s.publisherName,
+    caption:  s.content ? s.content.slice(0, 80) + (s.content.length > 80 ? '…' : '') : '',
     storyId:  s.id,
   }))
 

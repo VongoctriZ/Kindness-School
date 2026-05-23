@@ -258,6 +258,101 @@
   text-align: right;
 }
 
+/* Moderation action column */
+.colAction {
+  width: 80px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+.modBtn {
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.modBtn:hover { background: #fecaca; }
+
+/* Confirmation dialog */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.dialog {
+  background: var(--color-surface);
+  border-radius: var(--r-lg);
+  padding: 28px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: var(--shadow-dropdown);
+}
+.dialogTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+.dialogBody {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--space-4);
+}
+.dialogBtns {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+.cancelBtn {
+  padding: 8px 20px;
+  border-radius: var(--r-pill);
+  border: 1.5px solid #e5e7eb;
+  background: none;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.cancelBtn:hover { border-color: var(--color-text-secondary); }
+.confirmBtn {
+  padding: 8px 20px;
+  border-radius: var(--r-pill);
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.confirmBtn:hover { background: #b91c1c; }
+.confirmBtn:disabled, .cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a2e;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: var(--r-pill);
+  font-size: var(--text-sm);
+  z-index: 1100;
+  white-space: nowrap;
+  box-shadow: var(--shadow-dropdown);
+}
+
 /* Empty state */
 .empty {
   display: flex;
@@ -275,6 +370,7 @@
   .colJoined { display: none; }
   .colGrade  { width: 70px; }
   .colRole   { width: 80px; }
+  .colAction { width: 60px; }
   .toolbarIn { gap: 8px; }
   .controls  { margin-left: 0; width: 100%; }
 }

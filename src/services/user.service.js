@@ -128,6 +128,14 @@ export async function rejectTeacher(uid) {
   await updateDoc(doc(db, 'users', uid), { role: 'rejected' })
 }
 
+export async function resetUserContent(targetUid) {
+  await updateDoc(doc(db, 'users', targetUid), {
+    totalPoints:     0,
+    cyclePoints:     0,
+    matureTreeCount: 0,
+  })
+}
+
 export async function getUserStats() {
   const snap  = await getDocs(collection(db, 'users'))
   const users = snap.docs.map(d => d.data())

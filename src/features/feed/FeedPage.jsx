@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { getRoleLabel, derivePointsDisplay } from '../../lib/utils'
+import { getRoleLabel, derivePointsDisplay, KINDNESS_TITLES } from '../../lib/utils'
 import { Link }   from 'react-router-dom'
 import { useFeedController }    from '../../mvc/controllers/useFeedController'
 import { useLeaderboard }       from '../../mvc/controllers/usePointsController'
@@ -149,6 +149,27 @@ export default function FeedPage() {
               </div>
             ))}
           </div>
+
+          {/* Milestone levels */}
+          {profile && (() => {
+            const { cyclePoints } = derivePointsDisplay(profile)
+            return (
+              <div className={styles.sideCard}>
+                <div className={styles.sideTitle}>🏅 Cấp độ điểm mốc</div>
+                {KINDNESS_TITLES.map((tier, i) => {
+                  const next = KINDNESS_TITLES[i + 1]
+                  const isCurrent = cyclePoints >= tier.min && (next == null || cyclePoints < next.min)
+                  return (
+                    <div key={tier.title} className={`${styles.msRow} ${isCurrent ? styles.msCurrent : ''}`}>
+                      <span className={styles.msIcon}>{tier.icon}</span>
+                      <span className={styles.msTitle}>{tier.title}</span>
+                      <span className={styles.msPts}>{tier.min === 0 ? 'Bắt đầu' : `${tier.min} đ`}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
 
         </aside>
       </div>

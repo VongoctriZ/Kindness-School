@@ -32,7 +32,15 @@ service cloud.firestore {
         ||
         // Admin thay đổi role (duyệt / từ chối giáo viên)
         (isAdmin()
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']));
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']))
+        ||
+        // Teacher/Admin reset điểm về 0 (kiểm duyệt vi phạm)
+        ((isTeacher() || isAdmin())
+          && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['totalPoints', 'cyclePoints', 'matureTreeCount'])
+          && request.resource.data.totalPoints == 0
+          && request.resource.data.cyclePoints == 0
+          && request.resource.data.matureTreeCount == 0);
     }
 
     // ── Posts ─────────────────────────────────────────────────────────────────

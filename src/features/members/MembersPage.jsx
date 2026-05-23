@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useAllUsersRanked } from '../../mvc/controllers/usePointsController'
 import { formatRelativeTime, extractGradeBlock, getRoleLabel } from '../../lib/utils'
 import { GRADE_BLOCKS, ROLES } from '../../lib/constants'
+import useAuthStore from '../../store/useAuthStore'
+import { resetUserContent } from '../../services/user.service'
+import { deleteAllPostsByUser } from '../../services/post.service'
 import Avatar  from '../../components/Avatar/Avatar'
 import Spinner from '../../components/Spinner/Spinner'
 import styles  from './MembersPage.module.css'
@@ -11,11 +14,38 @@ const TABS = ['Học sinh', 'Giáo viên']
 
 export default function MembersPage() {
   const { users, loading } = useAllUsersRanked()
+  const { profile: myProfile } = useAuthStore()
 
-  const [tab,         setTab]         = useState('Học sinh')
-  const [search,      setSearch]      = useState('')
-  const [gradeFilter, setGradeFilter] = useState('Tất cả')
-  const [sortBy,      setSortBy]      = useState('points') // 'points' | 'name' | 'joined'
+  const [tab,           setTab]           = useState('Học sinh')
+  const [search,        setSearch]        = useState('')
+  const [gradeFilter,   setGradeFilter]   = useState('Tất cả')
+  const [sortBy,        setSortBy]        = useState('points') // 'points' | 'name' | 'joined'
+  const [confirmTarget, setConfirmTarget] = useState(null)    // { uid, displayName }
+  const [processing,    setProcessing]    = useState(false)
+  const [toast,         setToast]         = useState(null)
+
+  const canModerate = myProfile?.role === ROLES.TEACHER || myProfile?.role === ROLES.ADMIN
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const handleConfirm = useCallback(async () => {
+    if (!confirmTarget) return
+    setProcessing(true)
+    try {
+      const count = await deleteAllPostsByUser(confirmTarget.uid)
+      await resetUserContent(confirmTarget.uid)
+      setToast(`Đã xóa ${count} bài và reset điểm của ${confirmTarget.displayName}`)
+      setConfirmTarget(null)
+    } catch (e) {
+      setToast('Lỗi: ' + e.message)
+    } finally {
+      setProcessing(false)
+    }
+  }, [confirmTarget])
 
   const students = useMemo(() =>
     users.filter(u => u.role === ROLES.STUDENT || !u.role),
@@ -167,6 +197,7 @@ export default function MembersPage() {
                   <span className={styles.colGrade}>Lớp</span>
                   <span className={styles.colPts}>Điểm</span>
                   <span className={styles.colJoined}>Tham gia</span>
+                  {canModerate && <span className={styles.colAction}>Xử lý</span>}
                 </div>
                 {displayList.map((u, i) => (
                   <Link key={u.uid} to={`/profile/${u.uid}`} className={styles.row}>
@@ -182,6 +213,20 @@ export default function MembersPage() {
                     <span className={styles.colJoined}>
                       {u.createdAt ? formatRelativeTime(u.createdAt) : '—'}
                     </span>
+                    {canModerate && (
+                      <span className={styles.colAction}>
+                        <button
+                          className={styles.modBtn}
+                          onClick={e => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            setConfirmTarget({ uid: u.uid, displayName: u.displayName })
+                          }}
+                        >
+                          🗑 Xử lý
+                        </button>
+                      </span>
+                    )}
                   </Link>
                 ))}
               </>
@@ -216,6 +261,27 @@ export default function MembersPage() {
           </div>
         )}
       </div>
+      {confirmTarget && (
+        <div className={styles.overlay} onClick={() => !processing && setConfirmTarget(null)}>
+          <div className={styles.dialog} onClick={e => e.stopPropagation()}>
+            <div className={styles.dialogTitle}>⚠️ Xác nhận xử lý vi phạm</div>
+            <p className={styles.dialogBody}>
+              Xóa toàn bộ bài viết của <strong>{confirmTarget.displayName}</strong> và đặt điểm về 0?
+              <br />Hành động này không thể hoàn tác.
+            </p>
+            <div className={styles.dialogBtns}>
+              <button className={styles.cancelBtn} onClick={() => setConfirmTarget(null)} disabled={processing}>
+                Hủy
+              </button>
+              <button className={styles.confirmBtn} onClick={handleConfirm} disabled={processing}>
+                {processing ? 'Đang xử lý...' : 'Xác nhận'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <div className={styles.toast}>{toast}</div>}
     </div>
   )
 }

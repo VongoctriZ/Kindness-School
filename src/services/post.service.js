@@ -1,7 +1,7 @@
 import {
-  collection, addDoc, setDoc, doc, getDoc, updateDoc, deleteDoc,
+  collection, addDoc, setDoc, doc, getDoc, getDocs, updateDoc, deleteDoc,
   query, orderBy, limit, where,
-  onSnapshot, serverTimestamp, increment, runTransaction,
+  onSnapshot, serverTimestamp, increment, runTransaction, writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
 import { buildPostDoc } from '../mvc/models/post.model'
@@ -42,15 +42,21 @@ export function subscribeToUserPosts(uid, callback, onError) {
 }
 
 export async function toggleLike(postId, uid) {
-  const likeRef = doc(db, 'posts', postId, 'likes', uid)
+  const likeRef  = doc(db, 'posts', postId, 'likes', uid)
   const likeSnap = await getDoc(likeRef)
   const postRef  = doc(db, 'posts', postId)
 
-  let nowLiked = false
+  let nowLiked    = false
+  let authorId    = null
+  let postContent = null
 
   await runTransaction(db, async tx => {
     const postSnap = await tx.get(postRef)
     if (!postSnap.exists()) throw new Error('Bài viết không tồn tại')
+
+    const data  = postSnap.data()
+    authorId    = data.authorId
+    postContent = data.content
 
     if (likeSnap.exists()) {
       tx.delete(likeRef)
@@ -60,23 +66,24 @@ export async function toggleLike(postId, uid) {
       tx.set(likeRef, { uid, createdAt: serverTimestamp() })
       tx.update(postRef, { likeCount: increment(1) })
       nowLiked = true
-      const postData = postSnap.data()
-      const authorId = postData.authorId
-      if (authorId !== uid) {
-        addPoints(authorId, POINTS.LIKE_RECEIVED, 'like_received', postId)
-      }
-      // Notification (outside transaction — non-critical)
-      const liker = await getUserById(uid)
+    }
+  })
+
+  // Sau transaction — tránh nested transaction khi gọi addPoints
+  if (nowLiked && authorId && authorId !== uid) {
+    addPoints(authorId, POINTS.LIKE_RECEIVED, 'like_received', postId)
+      .catch(e => console.error('[toggleLike] addPoints:', e.message))
+    getUserById(uid).then(liker => {
       createNotification(authorId, {
         type:         'like',
         fromUid:      uid,
         fromName:     liker?.displayName ?? 'Ai đó',
         fromPhotoURL: liker?.photoURL ?? null,
-        postId:       postId,
-        postSnippet:  postData.content,
+        postId,
+        postSnippet:  postContent,
       })
-    }
-  })
+    })
+  }
 
   return nowLiked
 }
@@ -116,6 +123,17 @@ export async function deletePost(postId, uid, role) {
   const isPrivileged = role === 'teacher' || role === 'admin'
   if (!isAuthor && !isPrivileged) throw new Error('Không có quyền xoá')
   await deleteDoc(doc(db, 'posts', postId))
+}
+
+export async function deleteAllPostsByUser(targetUid) {
+  const snap = await getDocs(
+    query(collection(db, 'posts'), where('authorId', '==', targetUid))
+  )
+  if (snap.empty) return 0
+  const batch = writeBatch(db)
+  snap.docs.forEach(d => batch.delete(d.ref))
+  await batch.commit()
+  return snap.size
 }
 
 export async function deleteComment(commentId, postId) {

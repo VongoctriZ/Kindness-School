@@ -39,11 +39,11 @@ export default function MembersPage() {
       const count = await deleteAllPostsByUser(confirmTarget.uid)
       await resetUserContent(confirmTarget.uid)
       setToast(`Đã xóa ${count} bài và reset điểm của ${confirmTarget.displayName}`)
-      setConfirmTarget(null)
     } catch (e) {
       setToast('Lỗi: ' + e.message)
     } finally {
       setProcessing(false)
+      setConfirmTarget(null)
     }
   }, [confirmTarget])
 

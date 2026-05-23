@@ -11,6 +11,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents:      read
+      deployments:   write   # Firebase action tạo deployment status
+      pull-requests: write   # Firebase action comment preview URL lên PR
 
     steps:
       - name: Checkout code

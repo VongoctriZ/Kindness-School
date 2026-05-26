@@ -30,6 +30,13 @@ service cloud.firestore {
              .hasOnly(['totalPoints', 'cyclePoints', 'matureTreeCount'])
           && (request.resource.data.totalPoints - resource.data.totalPoints) in [2, 5, 10, 20])
         ||
+        // Bất kỳ user authenticated có thể cộng +2 điểm (like_received) vào tài khoản người khác
+        (request.auth != null
+          && request.auth.uid != uid
+          && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['totalPoints', 'cyclePoints', 'matureTreeCount'])
+          && (request.resource.data.totalPoints - resource.data.totalPoints) == 2)
+        ||
         // Admin thay đổi role (duyệt / từ chối giáo viên)
         (isAdmin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']))
@@ -81,7 +88,10 @@ service cloud.firestore {
     // ── Point History (weekly ranking) ───────────────────────────────────────
     match /pointHistory/{docId} {
       allow read:   if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      // Cho phép ghi history cho chính mình hoặc cho người khác khi đó là like_received
+      allow create: if request.auth != null
+        && (request.resource.data.uid == request.auth.uid
+            || request.resource.data.action == 'like_received');
     }
 
     // ── Stories ───────────────────────────────────────────────────────────────

@@ -103,10 +103,6 @@ export default function FeedPage() {
               </Link>
               <div className={styles.ucName}>{profile.displayName}</div>
               <div className={styles.ucSub}>{profile.grade} · {getRoleLabel(profile.role)}</div>
-              <div className={styles.ucStats}>
-                <div className={styles.ucStat}><div className={styles.ucN}>28</div><div className={styles.ucL}>Bài viết</div></div>
-                <div className={styles.ucStat}><div className={styles.ucN}>112</div><div className={styles.ucL}>Likes nhận</div></div>
-              </div>
               <div className={styles.ucProgressWrap}>
                 <KindnessProgress
                 points={profile.totalPoints ?? 0}

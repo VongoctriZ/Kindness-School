@@ -24,7 +24,10 @@ export default function StoriesPage() {
   const canPost = profile?.role === ROLES.TEACHER || profile?.role === ROLES.ADMIN
 
   // Luôn gộp stories thật + sample, stories thật hiện trước
-  const allStories = [...stories, ...SAMPLE_STORIES]
+  // const allStories = [...stories, ...SAMPLE_STORIES]
+
+  // Chỉ sử dụng stories thật
+  const allStories = [...stories]
 
   const filtered = filter === 'all'
     ? allStories

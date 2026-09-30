@@ -37,13 +37,17 @@ export default function FeedPage() {
   }))
 
   // Khi chưa có featured story trong Firestore, dùng sample stories nổi bật
+  /*
   const sampleFeaturedSlides = featured.length === 0
     ? SAMPLE_STORIES
         .filter(s => s.isFeatured)
         .map(s => ({ imageUrl: s.imageUrl, title: s.title, caption: s.content.slice(0, 60), storyId: null }))
     : []
-
-  const carouselSlides = [...featuredSlides, ...sampleFeaturedSlides, ...STATIC_HERO_SLIDES]
+  */
+  // const carouselSlides = [...featuredSlides, ...sampleFeaturedSlides, ...STATIC_HERO_SLIDES]
+  
+  // Bỏ sample stories và static slides, chỉ dùng featured stories từ Firestore
+  const carouselSlides = [...featuredSlides]
 
   return (
     <div className={styles.page}>
